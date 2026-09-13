@@ -1,0 +1,38 @@
+name: Actualizar Bolivar
+
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Clonar repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Instalar dependencias y navegador
+        run: |
+          pip install playwright beautifulsoup4 feedgen
+          playwright install --with-deps chromium
+
+      - name: Ejecutar script
+        run: |
+          python generate_rss.py
+
+      - name: Commit y push de rss.xml si hay cambios
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add rss.xml
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Actualizar rss.xml automáticamente" && git push)
