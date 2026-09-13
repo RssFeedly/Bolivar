@@ -6,10 +6,12 @@ from playwright.sync_api import sync_playwright
 
 urls = [
     "https://www.bolivar.com.bo/Noticias",
+    "https://www.bolivar.com.bo/Noticias/Actuales",
+    "https://www.bolivar.com.bo/Noticias/Mas-Leidas"
 ]
 
 fg = FeedGenerator()
-fg.title("RSS Bolívar")
+fg.title("RSS Club Bolívar")
 fg.link(href="https://www.bolivar.com.bo")
 fg.description("Feed generado automáticamente con GitHub Actions y Playwright")
 
@@ -33,22 +35,26 @@ with sync_playwright() as p:
         soup = BeautifulSoup(page.content(), "html.parser")
         found_count = 0
 
-        for a in soup.find_all("a", href=True):
+        for card_title in soup.find_all(class_="card-title"):
+            a = card_title.find("a", href=True)
+            if not a:
+                continue
+
             link = a.get("href")
             title = a.get_text(strip=True)
-            
-            if "/noticias/" in link and len(title) > 15:
-                full_link = urljoin("https://www.aciprensa.com", link)
-                
+
+            if len(title) > 5:
+                full_link = urljoin("https://www.bolivar.com.bo", link)
+
                 if full_link not in seen_links:
                     seen_links.add(full_link)
-                    
+
                     fe = fg.add_entry()
                     fe.title(title)
                     fe.link(href=full_link)
                     total_entries += 1
                     found_count += 1
-                    
+
                     if found_count >= 5:
                         break
 
